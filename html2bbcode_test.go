@@ -13,13 +13,15 @@ type test struct {
 
 var tests = []test{
 	test{"Plain text", "Lorem ipsum", "Lorem ipsum", nil},
+	test{"Line break", "Lorem ipsum<br />", "Lorem ipsum\n", nil},
+	test{"Paragraph", "<p>Lorem ipsum</p>", "Lorem ipsum\n", nil},
 }
 
 func TestConvert(t *testing.T) {
 	for _, d := range tests {
 		bbcode, err := Convert(d.html)
 		if err != d.err {
-			t.Errorf("%s: want err = %s got %s",
+			t.Errorf("%s: want err = %v got %s",
 				d.name, d.err, err)
 		}
 		if bbcode != d.bbcode {

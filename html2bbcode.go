@@ -372,37 +372,42 @@ func (bc *BBCode) element(n *html.Node) error {
 	switch n.DataAtom {
 	case atom.Html, atom.Head, atom.Body:
 		return bc.convertChildren(n)
-	case atom.Span:
-		return bc.Span(n)
-	case atom.Div:
-		return bc.Div(n)
-	case atom.Ul:
-		bc.lists = append(bc.lists, "[*]")
+	case atom.A:
+		return bc.A(n)
+	case atom.Blockquote:
+		return bc.BlockQuote(n)
+	case atom.Br, atom.P:
 		if err := bc.convertChildren(n); err != nil {
 			return err
 		}
-		bc.lists = bc.lists[:len(bc.lists)-1]
+		bc.WriteString("\n")
+	case atom.Div:
+		return bc.Div(n)
+	case atom.Hr:
+		return bc.Hr(n)
+	case atom.Img:
+		return bc.Img(n)
+	case atom.Li:
+		bc.WriteString(bc.lists[len(bc.lists)-1])
+		return bc.convertChildren(n)
 	case atom.Ol:
 		bc.lists = append(bc.lists, "[#]")
 		if err := bc.convertChildren(n); err != nil {
 			return err
 		}
 		bc.lists = bc.lists[:len(bc.lists)-1]
-	case atom.Li:
-		bc.WriteString(bc.lists[len(bc.lists)-1])
-		return bc.convertChildren(n)
-	case atom.Strong:
-		return bc.Strong(n)
-	case atom.A:
-		return bc.A(n)
-	case atom.Img:
-		return bc.Img(n)
-	case atom.Blockquote:
-		return bc.BlockQuote(n)
-	case atom.Hr:
-		return bc.Hr(n)
 	case atom.Pre:
 		return bc.Pre(n)
+	case atom.Span:
+		return bc.Span(n)
+	case atom.Strong:
+		return bc.Strong(n)
+	case atom.Ul:
+		bc.lists = append(bc.lists, "[*]")
+		if err := bc.convertChildren(n); err != nil {
+			return err
+		}
+		bc.lists = bc.lists[:len(bc.lists)-1]
 	default:
 		return fmt.Errorf("unknown element %s", n.Data)
 	}
