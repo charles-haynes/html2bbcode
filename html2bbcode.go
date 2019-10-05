@@ -383,7 +383,7 @@ func (bc *BBCode) Span(n *html.Node) error {
 			return bc.SpanStyle(n, a.Val)
 		}
 	}
-	return nil
+	return fmt.Errorf("unknown span")
 }
 
 func (bc *BBCode) DivStyle(n *html.Node, v string) error {
@@ -401,15 +401,15 @@ func (bc *BBCode) DivStyle(n *html.Node, v string) error {
 			}
 		}
 	}
-	return nil
+	return fmt.Errorf("unknown div style %s", v)
 }
 
 func (bc *BBCode) Div(n *html.Node) error {
-	if style, err := GetAttr(n, "style"); err != nil {
+	style, err := GetAttr(n, "style")
+	if err != nil {
 		return err
-	} else {
-		return bc.DivStyle(n, style)
 	}
+	return bc.DivStyle(n, style)
 }
 
 func (bc *BBCode) Strong(n *html.Node) error {
@@ -546,9 +546,7 @@ func (bc *BBCode) A(n *html.Node) error {
 	case strings.HasPrefix(href, "artist.php?artistname="):
 		return fmt.Errorf("todo")
 	default:
-		if n.FirstChild != nil &&
-			n.FirstChild.Type == html.TextNode &&
-			n.FirstChild.Data == href {
+		if AssertText(n.FirstChild, href) == nil {
 			// href = anchor text
 			// urls are autolinked
 			// no tags required
