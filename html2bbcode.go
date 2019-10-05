@@ -127,18 +127,18 @@ import (
 	}
 }*/
 
-func GetAttr(as []html.Attribute, key string) string {
-	for _, a := range as {
+func GetAttr(n *html.Node, key string) (string, error) {
+	for _, a := range n.Attr {
 		if a.Key == key {
-			return a.Val
+			return a.Val, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("attr %s not found", key)
 }
 
 type BBCode struct {
 	strings.Builder
-	lists []string // stack of nexted list types
+	lists []string // stack of nested list types
 }
 
 func (bc BBCode) Node(n *html.Node, tag string) error {
@@ -199,11 +199,35 @@ func (bc BBCode) NodeValData(n *html.Node, tag, v string) error {
 	return nil
 }
 
-func (bc *BBCode) A(n *html.Node) error {
-	return nil
-}
-
 func (bc *BBCode) Img(n *html.Node) error {
+	src, err := GetAttr(n, "src")
+	if err != nil {
+		return err
+	}
+	alt, _ := GetAttr(n, "alt")
+	if border, _ := GetAttr(n, "border"); border == "0" &&
+		strings.HasPrefix(src, "static/common/smileys/") {
+		return fmt.Errorf("todo")
+	}
+	if class, _ := GetAttr(n, "class"); class == "scale_image" {
+		// width, _ := GetAttr(n, "width")
+		if onclick, _ := GetAttr(n, "onclick"); onclick != "lightbox.init(this, $(this).width());" {
+			return fmt.Errorf("img class is scale_image but no onclick")
+		}
+		if n.FirstChild == nil {
+			bc.WriteString("[img=")
+			bc.WriteString(alt)
+			bc.WriteString("]")
+			return nil
+		}
+	}
+	if n.FirstChild == nil {
+		bc.WriteString("[img=")
+		bc.WriteString(src)
+		bc.WriteString("]")
+		return nil
+	}
+	bc.Node(n, "img")
 	return nil
 }
 
@@ -312,58 +336,55 @@ func (bc *BBCode) Strong(n *html.Node) error {
 	return bc.Node(n, "strong")
 }
 
-func (bc *BBCode) ParseA(n *html.Node) error {
-	for _, a := range n.Attr {
-		switch a.Key {
-		case "href":
-			switch true {
-			case a.Val == n.Data:
-				// href = anchor text
-				// urls are autolinked
-				// no tags required
-				bc.WriteString(a.Val)
-				return nil
-			case a.Val == "javascript:void(0);":
-				if GetAttr(n.Attr, "onclick") ==
-					"BBCode.spoiler(this)" {
-					// do nothing. Will get picked up
-					// by the blockquote node
-				}
-			case strings.HasPrefix(a.Val, "artist.php?artistname="):
-				return bc.NodeData(n, "artist")
-			case strings.HasPrefix(a.Val, "user.php?action=search&search="):
-				return bc.NodeData(n, "user")
-			case strings.HasPrefix(a.Val, "forums.php?action=viewthread&threadid="):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "requests.php?action=view&id="):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "collages.php?id="):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "torrents.php?id="):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "torrents.php?recordlabel="):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "torrents.php?taglist="):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "rel=\"noreferrer\" target=\"_blank\" href=\"http...\""):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, "artist.php?artistname="):
-				return fmt.Errorf("todo")
-			default:
-				return bc.NodeValData(n, "url", a.Val)
-			}
-		case "img":
-			switch true {
-			case strings.HasPrefix(a.Val, `alt="..." src="..."`):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, `img border="0" src="static/common/smileys/..." alt=""`):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, `width="18" class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="http..." src="http...`):
-				return fmt.Errorf("todo")
-			case strings.HasPrefix(a.Val, `class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="http..." src="http..."`):
-				return fmt.Errorf("todo")
-			}
+func (bc *BBCode) A(n *html.Node) error {
+	a, err := GetAttr(n, "href")
+	if err != nil {
+		return err
+	}
+	switch true {
+	case a == "javascript:void(0);":
+		if a, _ := GetAttr(n, "onclick"); a ==
+			"BBCode.spoiler(this)" {
+			// do nothing. Will get picked up
+			// by the blockquote node
 		}
+	case strings.HasPrefix(a, "artist.php?artistname="):
+		return bc.NodeData(n, "artist")
+	case strings.HasPrefix(a, "user.php?action=search&search="):
+		return bc.NodeData(n, "user")
+	case strings.HasPrefix(a, "forums.php?action=viewthread&threadid="):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "requests.php?action=view&id="):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "collages.php?id="):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "torrents.php?id="):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "torrents.php?recordlabel="):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "torrents.php?taglist="):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "rel=\"noreferrer\" target=\"_blank\" href=\"http...\""):
+		return fmt.Errorf("todo")
+	case strings.HasPrefix(a, "artist.php?artistname="):
+		return fmt.Errorf("todo")
+	default:
+		if n.FirstChild != nil &&
+			n.FirstChild.Type == html.TextNode &&
+			n.FirstChild.Data == a {
+			// href = anchor text
+			// urls are autolinked
+			// no tags required
+			bc.WriteString(a)
+			return nil
+		}
+		bc.WriteString(`[url=`)
+		bc.WriteString(a)
+		bc.WriteString(`]`)
+		if err := bc.convertChildren(n); err != nil {
+			return err
+		}
+		bc.WriteString("[/url]")
 	}
 	return nil
 }
