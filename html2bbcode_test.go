@@ -106,6 +106,18 @@ var tests = []test{
 		"<3",
 		nil,
 	},
+	test{
+		"smiley wave",
+		`<img border="0" src="static/common/smileys/wave.gif" alt="" />`,
+		":wave:",
+		nil,
+	},
+	test{
+		"smiley sad",
+		`<img border="0" src="static/common/smileys/sad.gif" alt="" />`,
+		":(",
+		nil,
+	},
 }
 
 func TestConvert(t *testing.T) {
