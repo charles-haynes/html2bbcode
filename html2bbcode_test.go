@@ -25,6 +25,24 @@ var tests = []test{
 		`<img class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="https://lut.im/9wZAp52yrB/0RELtSt1QzgHZIoz.jpg" src="https://redacted.ch/image.php?c=1&amp;i=https%3A%2F%2Flut.im%2F9wZAp52yrB%2F0RELtSt1QzgHZIoz.jpg" />`,
 		"[img=https://lut.im/9wZAp52yrB/0RELtSt1QzgHZIoz.jpg]",
 		nil},
+	test{
+		"img with alt",
+		`<img alt="https://ptpimg.me/72r077.png" src="https://ptpimg.me/72r077.png" />`,
+		`[img=https://ptpimg.me/72r077.png]`,
+		nil,
+	},
+	test{
+		"bold",
+		"<strong>Lorem ipsum</strong>",
+		"[b]Lorem ipsum[/b]",
+		nil,
+	},
+	test{
+		"italic",
+		`<span style="font-style: italic;">Lorem ipsum</span>`,
+		"[i]Lorem ipsum[/i]",
+		nil,
+	},
 }
 
 func TestConvert(t *testing.T) {

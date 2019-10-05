@@ -141,7 +141,7 @@ type BBCode struct {
 	lists []string // stack of nested list types
 }
 
-func (bc BBCode) Node(n *html.Node, tag string) error {
+func (bc *BBCode) Node(n *html.Node, tag string) error {
 	bc.WriteString("[")
 	bc.WriteString(tag)
 	bc.WriteString("]")
@@ -154,7 +154,7 @@ func (bc BBCode) Node(n *html.Node, tag string) error {
 	return nil
 }
 
-func (bc BBCode) NodeData(n *html.Node, tag string) error {
+func (bc *BBCode) NodeData(n *html.Node, tag string) error {
 	if n.FirstChild != nil {
 		return fmt.Errorf("expected node %s not to have children", tag)
 	}
@@ -168,7 +168,7 @@ func (bc BBCode) NodeData(n *html.Node, tag string) error {
 	return nil
 }
 
-func (bc BBCode) NodeVal(n *html.Node, tag, v string) error {
+func (bc *BBCode) NodeVal(n *html.Node, tag, v string) error {
 	bc.WriteString("[")
 	bc.WriteString(tag)
 	bc.WriteString("=")
@@ -183,7 +183,7 @@ func (bc BBCode) NodeVal(n *html.Node, tag, v string) error {
 	return nil
 }
 
-func (bc BBCode) NodeValData(n *html.Node, tag, v string) error {
+func (bc *BBCode) NodeValData(n *html.Node, tag, v string) error {
 	if n.FirstChild != nil {
 		return fmt.Errorf("expected node %s not to have children", tag)
 	}
@@ -249,13 +249,13 @@ func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 		if len(ss) != 2 {
 			return fmt.Errorf("can't parse style %s", style)
 		}
-		sk, sv := ss[0], ss[1]
+		sk, sv := strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
 		switch sk {
 		case "font-style":
 			if string(sv) != "italic" {
 				return fmt.Errorf("unknown font-style %s", sv)
 			}
-			return bc.Node(n, "italic")
+			return bc.Node(n, "i")
 		case "text-decoration":
 			if string(sv) != "underline" {
 				return fmt.Errorf("unknown text-decoration %s", sv)
@@ -322,18 +322,15 @@ func (bc *BBCode) Div(n *html.Node) error {
 }
 
 func (bc *BBCode) Strong(n *html.Node) error {
-	for _, a := range n.Attr {
-		switch a.Key {
-		case "class":
-			switch a.Val {
-			case "important_text":
-				return bc.Node(n, "important")
-			case "quote":
-				return bc.Node(n, "quote")
-			}
-		}
+	class, _ := GetAttr(n, "class")
+	switch class {
+	case "important_text":
+		return bc.Node(n, "important")
+	case "quote":
+		return bc.Node(n, "quote")
+	default:
+		return bc.Node(n, "b")
 	}
-	return bc.Node(n, "strong")
 }
 
 func (bc *BBCode) A(n *html.Node) error {
