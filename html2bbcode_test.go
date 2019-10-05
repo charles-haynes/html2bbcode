@@ -100,6 +100,12 @@ var tests = []test{
 		"[align=right]Lorem ipsum[/align]",
 		nil,
 	},
+	test{
+		"smiley heart",
+		`<img border="0" src="static/common/smileys/heart.gif" alt="" />`,
+		"<3",
+		nil,
+	},
 }
 
 func TestConvert(t *testing.T) {

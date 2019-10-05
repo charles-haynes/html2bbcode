@@ -199,6 +199,55 @@ func (bc *BBCode) NodeValData(n *html.Node, tag, v string) error {
 	return nil
 }
 
+var smileyMap = map[string]string{
+	"angry.gif":   `:angry:`,
+	"biggrin.gif": `:-D`,
+	// "biggrin.gif":   `:D`,
+	"blank.gif": `:|`,
+	// "blank.gif":     `:-|`,
+	"blush.gif":  `:blush:`,
+	"cool.gif":   `:cool:`,
+	"crying.gif": `:'(`,
+	// "crying.gif":    `:crying:`,
+	"eyesright.gif": `>>`,
+	"frown.gif":     `:frown:`,
+	"heart.gif":     `<3`,
+	"hmm.gif":       `:unsure:`,
+	// "hmm.gif":       `:\`,
+	"ilu.gif":      `:whatlove:`,
+	"laughing.gif": `:lol:`,
+	"loveflac.gif": `:loveflac:`,
+	// "loveflac.gif":  `:flaclove:`,
+	"ninja.gif":  `:ninja:`,
+	"no.gif":     `:no:`,
+	"nod.gif":    `:nod:`,
+	"ohnoes.gif": `:ohno:`,
+	// "ohnoes.gif":    `:ohnoes:`,
+	"omg.gif":    `:omg:`,
+	"ohshit.gif": `:o`,
+	// "ohshit.gif":    `:O`,
+	"paddle.gif": `:paddle:`,
+	"sad.gif":    `:(`,
+	// "sad.gif":       `:-(`,
+	"shifty.gif": `:shifty:`,
+	"sick.gif":   `:sick:`,
+	"smile.gif":  `:)`,
+	// "smile.gif":     `:-)`,
+	"sorry.gif":  `:sorry:`,
+	"thanks.gif": `:thanks:`,
+	"tongue.gif": `:P`,
+	// "tongue.gif":    `:p`,
+	// "tongue.gif":    `:-P`,
+	// "tongue.gif": `:-p`,
+	"wave.gif": `:wave:`,
+	"wink.gif": `;-)`,
+	// "wink.gif":      `:wink:`,
+	"creepy.gif":  `:creepy:`,
+	"worried.gif": `:worried:`,
+	"wtf.gif":     `:wtf:`,
+	"wub.gif":     `:wub:`,
+}
+
 func (bc *BBCode) Img(n *html.Node) error {
 	src, err := GetAttr(n, "src")
 	if err != nil {
@@ -207,7 +256,13 @@ func (bc *BBCode) Img(n *html.Node) error {
 	alt, _ := GetAttr(n, "alt")
 	if border, _ := GetAttr(n, "border"); border == "0" &&
 		strings.HasPrefix(src, "static/common/smileys/") {
-		return fmt.Errorf("todo")
+		smiley := strings.TrimPrefix(src, "static/common/smileys/")
+		txt, ok := smileyMap[smiley]
+		if !ok {
+			return fmt.Errorf("unknown smiley %s", smiley)
+		}
+		bc.WriteString(txt)
+		return nil
 	}
 	if class, _ := GetAttr(n, "class"); class == "scale_image" {
 		// width, _ := GetAttr(n, "width")
