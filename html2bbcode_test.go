@@ -118,6 +118,23 @@ var tests = []test{
 		":(",
 		nil,
 	},
+	test{
+		"complete entry with 'More info'",
+		`<strong><span class="size4">Tracklist</span></strong><br />
+<strong>01.</strong> Claude Vonstroke &amp; Eddy M - Getting Hot <span style="font-style: italic;">(3:50)</span><br />
+<br />
+It&#39;s &#39;Getting Hot&#39;, and Claude VonStroke and Eddy M team up to give you what you want! Eddy M hails from Barcelona, where he is a resident of the infamous El Row parties, and him and Claude are a perfect match for this funky, rolling monster.<br />
+<br />
+<strong>More info:</strong> <span style="display:inline-block; padding: 0px 3px;"><a rel="noreferrer" target="_blank" href="https://listen.tidal.com/album/106594181"><img width="18" class="scale_image" onclick="lightbox.init(this, $(this).width());"
+alt="https://ptpimg.me/dhyvs6.png" src="https://ptpimg.me/dhyvs6.png" /> Tidal</a></span> <span style="display:inline-block; padding: 0px 3px;"><a rel="noreferrer" target="_blank" href="https://pro.beatport.com/release/getting-hot/2550383"><img width="18" class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="https://ptpimg.me/26k503.png" src="https://ptpimg.me/26k503.png" /> Beatport</a></span>`,
+		`[b][size=4]Tracklist[/size][/b]
+[b]01.[/b] Claude Vonstroke & Eddy M - Getting Hot [i](3:50)[/i]
+
+It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you want! Eddy M hails from Barcelona, where he is a resident of the infamous El Row parties, and him and Claude are a perfect match for this funky, rolling monster.
+
+[b]More info:[/b] [pad=0|3][url=https://listen.tidal.com/album/106594181][img=18]https://ptpimg.me/dhyvs6.png[/img] Tidal[/url][/pad] [pad=0|3][url=https://pro.beatport.com/release/getting-hot/2550383][img=18]https://ptpimg.me/26k503.png[/img] Beatport[/url][/pad]`,
+		nil,
+	},
 }
 
 func TestConvert(t *testing.T) {
@@ -128,8 +145,32 @@ func TestConvert(t *testing.T) {
 				d.name, d.err, err)
 		}
 		if bbcode != d.bbcode {
+			want := d.bbcode
+			got := bbcode
+			if len(want)+len(got) > 60 {
+				var i int
+				for i = 0; i < len(want) && i < len(got) && want[i] == got[i]; i++ {
+				}
+				start := i - 10
+				s := "..."
+				if start < 0 {
+					start = 0
+					s = ""
+				}
+				end := i + 10
+				if end > len(want) {
+					want = s + want[start:]
+				} else {
+					want = s + want[start:end] + "..."
+				}
+				if end > len(got) {
+					got = s + got[start:]
+				} else {
+					got = s + got[start:end] + "..."
+				}
+			}
 			t.Errorf(`%s: want bbcode = "%s" got "%s"`,
-				d.name, d.bbcode, bbcode)
+				d.name, want, got)
 		}
 	}
 }

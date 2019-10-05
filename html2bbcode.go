@@ -2,6 +2,7 @@ package html2bbcode
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -265,11 +266,18 @@ func (bc *BBCode) Img(n *html.Node) error {
 		return nil
 	}
 	if class, _ := GetAttr(n, "class"); class == "scale_image" {
-		// width, _ := GetAttr(n, "width")
 		if onclick, _ := GetAttr(n, "onclick"); onclick != "lightbox.init(this, $(this).width());" {
 			return fmt.Errorf("img class is scale_image but no onclick")
 		}
 		if n.FirstChild == nil {
+			if width, err := GetAttr(n, "width"); err == nil {
+				bc.WriteString("[img=")
+				bc.WriteString(width)
+				bc.WriteString("]")
+				bc.WriteString(alt)
+				bc.WriteString("[/img]")
+				return nil
+			}
 			bc.WriteString("[img=")
 			bc.WriteString(alt)
 			bc.WriteString("]")
@@ -309,6 +317,7 @@ func ParseStyle(style string) (sk, sv string, err error) {
 }
 
 func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
+	pad := false
 	for _, style := range strings.Split(v, ";") {
 		sk, sv, err := ParseStyle(style)
 		if err != nil {
@@ -327,10 +336,25 @@ func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 			return bc.Node(n, "underline")
 		case "color: ":
 			bc.NodeVal(n, "color", sv)
-		case "display:inline-block":
-			// TODO
+		case "display":
+			if sv == "inline-block" {
+				pad = true
+			} else {
+				return fmt.Errorf("unknown display %s", sv)
+			}
+		case "padding":
+			if !pad {
+				return fmt.Errorf("unexpected padding %s", style)
+			}
+			re := regexp.MustCompile("([0-9]+)px")
+			m := re.FindAllStringSubmatch(sv, -1)
+			var p []string
+			for i := range m {
+				p = append(p, m[i][1])
+			}
+			return bc.NodeVal(n, "pad", strings.Join(p, "|"))
 		default:
-			return fmt.Errorf("unknown span style %s", style)
+			return fmt.Errorf(`unknown span style "%s"`, style)
 		}
 	}
 	return nil
@@ -340,7 +364,7 @@ func (bc *BBCode) Span(n *html.Node) error {
 	for _, a := range n.Attr {
 		switch a.Key {
 		case "class":
-			if len(a.Val) < 5 || string(a.Val[:4]) != "size" {
+			if len(a.Val) < 5 || a.Val[:4] != `size` {
 				return fmt.Errorf("unknown span class %s", a.Val)
 			}
 			return bc.NodeVal(n, "size", a.Val[4:])
@@ -493,7 +517,7 @@ func (bc *BBCode) convert(n *html.Node) error {
 	case html.ErrorNode:
 		return fmt.Errorf("error node %s", n.Data)
 	case html.TextNode:
-		bc.WriteString(n.Data)
+		bc.WriteString(strings.ReplaceAll(n.Data, "\n", ""))
 		return nil
 	case html.DocumentNode:
 		return bc.convertChildren(n)
