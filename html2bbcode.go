@@ -294,7 +294,12 @@ func (bc *BBCode) Img(n *html.Node) error {
 	return nil
 }
 
-func (bc *BBCode) BlockQuote(n *html.Node) error {
+func (bc *BBCode) Blockquote(n *html.Node) error {
+	if !PartOfHidden(n) {
+		return bc.convertChildren(n)
+	}
+	strong := n.PrevSibling.PrevSibling.PrevSibling
+	bc.NodeVal(n, "hide", strong.FirstChild.Data)
 	return nil
 }
 
@@ -409,54 +414,143 @@ func (bc *BBCode) Strong(n *html.Node) error {
 	case "quote":
 		return bc.Node(n, "quote")
 	default:
+		if PartOfHidden(n) {
+			return nil
+		}
 		return bc.Node(n, "b")
 	}
 }
 
+func AssertElement(n *html.Node, a atom.Atom) error {
+	if n == nil {
+		return fmt.Errorf("expected element node, got nil")
+	}
+	if n.Type != html.ElementNode {
+		return fmt.Errorf("expected element node, got %d", n.Type)
+
+	}
+	if n.DataAtom != a {
+		return fmt.Errorf("expected %s element, got %s", a, n.DataAtom)
+	}
+	return nil
+}
+
+func AssertText(n *html.Node, t string) error {
+	if n == nil {
+		return fmt.Errorf("expected text node, got nil")
+	}
+	if n.Type != html.TextNode {
+		return fmt.Errorf("expected text node, got %d", n.Type)
+
+	}
+	if n.Data != t {
+		return fmt.Errorf("expected text %s, got %s", t, n.Data)
+	}
+	return nil
+}
+
+func Prev(n *html.Node) *html.Node {
+	if n == nil {
+		return nil
+	}
+	return n.PrevSibling
+}
+
+func Next(n *html.Node) *html.Node {
+	if n == nil {
+		return nil
+	}
+	return n.NextSibling
+}
+
+func PartOfHidden(n *html.Node) bool {
+	if n == nil {
+		return false
+	}
+	var strong, colon, a, blockquote *html.Node
+	switch n.Type {
+	case html.ElementNode:
+		switch n.DataAtom {
+		case atom.Strong:
+			strong = n
+		case atom.A:
+			strong = Prev(Prev(n))
+		case atom.Blockquote:
+			strong = Prev(Prev(Prev(n)))
+		default:
+			return false
+
+		}
+	case html.TextNode:
+		strong = Prev(n)
+	default:
+		return false
+	}
+	colon = Next(strong)
+	a = Next(colon)
+	blockquote = Next(a)
+	if strong == nil || colon == nil || a == nil || blockquote == nil {
+		return false
+	}
+	if colon.Data != ": " {
+		return false
+	}
+	if href, _ := GetAttr(a, "href"); href != "javascript:void(0);" {
+		return false
+	}
+	if onclick, _ := GetAttr(a, "onclick"); onclick !=
+		"BBCode.spoiler(this);" {
+		return false
+	}
+	if err := AssertElement(blockquote, atom.Blockquote); err != nil {
+		return false
+	}
+	if class, _ := GetAttr(blockquote, "class"); class != "hidden spoiler" {
+		return false
+	}
+	return true
+}
+
 func (bc *BBCode) A(n *html.Node) error {
-	a, err := GetAttr(n, "href")
+	href, err := GetAttr(n, "href")
 	if err != nil {
 		return err
 	}
 	switch true {
-	case a == "javascript:void(0);":
-		if a, _ := GetAttr(n, "onclick"); a ==
-			"BBCode.spoiler(this)" {
-			// do nothing. Will get picked up
-			// by the blockquote node
-		}
-	case strings.HasPrefix(a, "artist.php?artistname="):
+	case PartOfHidden(n):
+		return nil
+	case strings.HasPrefix(href, "artist.php?artistname="):
 		return bc.NodeData(n, "artist")
-	case strings.HasPrefix(a, "user.php?action=search&search="):
+	case strings.HasPrefix(href, "user.php?action=search&search="):
 		return bc.NodeData(n, "user")
-	case strings.HasPrefix(a, "forums.php?action=viewthread&threadid="):
+	case strings.HasPrefix(href, "forums.php?action=viewthread&threadid="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "requests.php?action=view&id="):
+	case strings.HasPrefix(href, "requests.php?action=view&id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "collages.php?id="):
+	case strings.HasPrefix(href, "collages.php?id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "torrents.php?id="):
+	case strings.HasPrefix(href, "torrents.php?id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "torrents.php?recordlabel="):
+	case strings.HasPrefix(href, "torrents.php?recordlabel="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "torrents.php?taglist="):
+	case strings.HasPrefix(href, "torrents.php?taglist="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "rel=\"noreferrer\" target=\"_blank\" href=\"http...\""):
+	case strings.HasPrefix(href, "rel=\"noreferrer\" target=\"_blank\" href=\"http...\""):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(a, "artist.php?artistname="):
+	case strings.HasPrefix(href, "artist.php?artistname="):
 		return fmt.Errorf("todo")
 	default:
 		if n.FirstChild != nil &&
 			n.FirstChild.Type == html.TextNode &&
-			n.FirstChild.Data == a {
+			n.FirstChild.Data == href {
 			// href = anchor text
 			// urls are autolinked
 			// no tags required
-			bc.WriteString(a)
+			bc.WriteString(href)
 			return nil
 		}
 		bc.WriteString(`[url=`)
-		bc.WriteString(a)
+		bc.WriteString(href)
 		bc.WriteString(`]`)
 		if err := bc.convertChildren(n); err != nil {
 			return err
@@ -473,7 +567,7 @@ func (bc *BBCode) element(n *html.Node) error {
 	case atom.A:
 		return bc.A(n)
 	case atom.Blockquote:
-		return bc.BlockQuote(n)
+		return bc.Blockquote(n)
 	case atom.Br, atom.P:
 		if err := bc.convertChildren(n); err != nil {
 			return err
@@ -517,6 +611,9 @@ func (bc *BBCode) convert(n *html.Node) error {
 	case html.ErrorNode:
 		return fmt.Errorf("error node %s", n.Data)
 	case html.TextNode:
+		if PartOfHidden(n) {
+			return nil
+		}
 		bc.WriteString(strings.ReplaceAll(n.Data, "\n", ""))
 		return nil
 	case html.DocumentNode:

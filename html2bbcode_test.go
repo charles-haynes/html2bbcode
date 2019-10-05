@@ -135,40 +135,67 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 [b]More info:[/b] [pad=0|3][url=https://listen.tidal.com/album/106594181][img=18]https://ptpimg.me/dhyvs6.png[/img] Tidal[/url][/pad] [pad=0|3][url=https://pro.beatport.com/release/getting-hot/2550383][img=18]https://ptpimg.me/26k503.png[/img] Beatport[/url][/pad]`,
 		nil,
 	},
+	test{
+		"spoiler",
+		`<strong>dolor</strong>: <a href="javascript:void(0);" onclick="BBCode.spoiler(this);">Show</a><blockquote class="hidden spoiler">Lorem ipsum</blockquote>`,
+		"[hide=dolor]Lorem ipsum[/hide]",
+		nil,
+	},
+	test{
+		"not spoiler",
+		`<strong>dolor</strong>: <a href="javascript:void(0);" onclick="BBCode.spoiler(this);">Show</a><blockquote class="dolor">Lorem ipsum</blockquote>`,
+		"[b]dolor[/b]: [url=javascript:void(0);]Show[/url]Lorem ipsum",
+		nil,
+	},
+}
+
+func EqualErrors(a, b error) bool {
+	if a == b {
+		return true
+	}
+	if a != nil && b != nil && a.Error() == b.Error() {
+		return true
+	}
+	return false
+}
+
+func Context(want, got string) (string, string) {
+	if len(want)+len(got) < 60 {
+		return want, got
+	}
+	var i int
+	// find where they differ
+	for i = 0; i < len(want) && i < len(got) && want[i] == got[i]; i++ {
+	}
+	start := i - 10
+	s := "..."
+	if start < 0 {
+		start = 0
+		s = ""
+	}
+	end := i + 10
+	if end > len(want) {
+		want = s + want[start:]
+	} else {
+		want = s + want[start:end] + "..."
+	}
+	if end > len(got) {
+		got = s + got[start:]
+	} else {
+		got = s + got[start:end] + "..."
+	}
+	return want, got
 }
 
 func TestConvert(t *testing.T) {
 	for _, d := range tests {
 		bbcode, err := Convert(d.html)
-		if err != d.err {
+		if !EqualErrors(err, d.err) {
 			t.Errorf(`%s: want err = %v got "%s"`,
 				d.name, d.err, err)
 		}
 		if bbcode != d.bbcode {
-			want := d.bbcode
-			got := bbcode
-			if len(want)+len(got) > 60 {
-				var i int
-				for i = 0; i < len(want) && i < len(got) && want[i] == got[i]; i++ {
-				}
-				start := i - 10
-				s := "..."
-				if start < 0 {
-					start = 0
-					s = ""
-				}
-				end := i + 10
-				if end > len(want) {
-					want = s + want[start:]
-				} else {
-					want = s + want[start:end] + "..."
-				}
-				if end > len(got) {
-					got = s + got[start:]
-				} else {
-					got = s + got[start:end] + "..."
-				}
-			}
+			want, got := Context(d.bbcode, bbcode)
 			t.Errorf(`%s: want bbcode = "%s" got "%s"`,
 				d.name, want, got)
 		}
