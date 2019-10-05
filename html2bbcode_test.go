@@ -136,7 +136,13 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		nil,
 	},
 	test{
-		"spoiler",
+		"spoiler without tag",
+		`<strong>Hidden text</strong>: <a href="javascript:void(0);" onclick="BBCode.spoiler(this);">Show</a><blockquote class="hidden spoiler">Lorem ipsum</blockquote>`,
+		"[hide]Lorem ipsum[/hide]",
+		nil,
+	},
+	test{
+		"spoiler with tag",
 		`<strong>dolor</strong>: <a href="javascript:void(0);" onclick="BBCode.spoiler(this);">Show</a><blockquote class="hidden spoiler">Lorem ipsum</blockquote>`,
 		"[hide=dolor]Lorem ipsum[/hide]",
 		nil,

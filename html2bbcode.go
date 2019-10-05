@@ -299,8 +299,14 @@ func (bc *BBCode) Blockquote(n *html.Node) error {
 		return bc.convertChildren(n)
 	}
 	strong := n.PrevSibling.PrevSibling.PrevSibling
-	bc.NodeVal(n, "hide", strong.FirstChild.Data)
-	return nil
+	if strong.FirstChild != nil &&
+		strong.FirstChild.Type == html.TextNode {
+		tag := strong.FirstChild.Data
+		if tag != "Hidden text" {
+			return bc.NodeVal(n, "hide", tag)
+		}
+	}
+	return bc.Node(n, "hide")
 }
 
 func (bc *BBCode) Hr(n *html.Node) error {
