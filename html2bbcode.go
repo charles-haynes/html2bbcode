@@ -243,13 +243,22 @@ func (bc *BBCode) Pre(n *html.Node) error {
 	return nil
 }
 
+func ParseStyle(style string) (sk, sv string, err error) {
+	ss := strings.Split(style, ":")
+	if len(ss) != 2 {
+		err = fmt.Errorf("can't parse style %s", style)
+		return sk, sv, err
+	}
+	sk, sv = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+	return sk, sv, err
+}
+
 func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 	for _, style := range strings.Split(v, ";") {
-		ss := strings.Split(style, ":")
-		if len(ss) != 2 {
-			return fmt.Errorf("can't parse style %s", style)
+		sk, sv, err := ParseStyle(style)
+		if err != nil {
+			return err
 		}
-		sk, sv := strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
 		switch sk {
 		case "font-style":
 			if string(sv) != "italic" {
@@ -266,7 +275,7 @@ func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 		case "display:inline-block":
 			// TODO
 		default:
-			return fmt.Errorf("unknown span style %s", ss)
+			return fmt.Errorf("unknown span style %s", style)
 		}
 	}
 	return nil
@@ -289,36 +298,28 @@ func (bc *BBCode) Span(n *html.Node) error {
 
 func (bc *BBCode) DivStyle(n *html.Node, v string) error {
 	for _, style := range strings.Split(v, ";") {
-		ss := strings.Split(style, ":")
-		if len(ss) != 2 {
-			return fmt.Errorf("can't parse style %s", style)
+		sk, sv, err := ParseStyle(style)
+		if err != nil {
+			return err
 		}
-		sk, sv := ss[0], ss[1]
-		switch sk {
-		case "text-align":
-			if string(sv) == "center" {
-				// TODO
-				return fmt.Errorf("todo")
+		if sk == "text-align" {
+			switch sv {
+			case "center", "left", "right":
+				return bc.NodeVal(n, "align", sv)
+			default:
+				return fmt.Errorf(`unknown text align "%s"`, sv)
 			}
-			if string(sv) == "right" {
-				// TODO
-				return fmt.Errorf("todo")
-			}
-		default:
-			return fmt.Errorf("unknown divstyle %s", ss)
 		}
 	}
 	return nil
 }
 
 func (bc *BBCode) Div(n *html.Node) error {
-	for _, a := range n.Attr {
-		switch a.Key {
-		case "style":
-			return bc.DivStyle(n, a.Val)
-		}
+	if style, err := GetAttr(n, "style"); err != nil {
+		return err
+	} else {
+		return bc.DivStyle(n, style)
 	}
-	return nil
 }
 
 func (bc *BBCode) Strong(n *html.Node) error {
