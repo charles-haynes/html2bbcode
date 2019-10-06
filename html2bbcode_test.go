@@ -178,6 +178,30 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"[url=Lorem ipsum]dolor[/url]",
 		nil,
 	},
+	test{
+		"taglist",
+		`<a href="https://torrents.php?taglist=Lorem ipsum">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"taglist error",
+		`<a href="https://torrents.php?taglist=Lorem ipsum">dolor</a>`,
+		"",
+		fmt.Errorf("taglist tag doesn't match text, Lorem ipsum != dolor"),
+	},
+	test{
+		"recordlabel",
+		`<a href="https://torrents.php?recordlabel=Lorem ipsum">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"recordlabel error",
+		`<a href="https://torrents.php?recordlabel=Lorem ipsum">dolor</a>`,
+		"",
+		fmt.Errorf("recordlabel tag doesn't match text, Lorem ipsum != dolor"),
+	},
 }
 
 func EqualErrors(a, b error) bool {

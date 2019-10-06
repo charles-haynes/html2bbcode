@@ -564,14 +564,26 @@ func (bc *BBCode) A(n *html.Node) error {
 		return fmt.Errorf("todo")
 	case strings.HasPrefix(href, "torrents.php?id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "torrents.php?recordlabel="):
-		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "torrents.php?taglist="):
-		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "rel=\"noreferrer\" target=\"_blank\" href=\"http...\""):
-		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "artist.php?artistname="):
-		return fmt.Errorf("todo")
+	case strings.Contains(href, "torrents.php?recordlabel="):
+		a := href[strings.Index(href, "torrents.php?recordlabel=")+
+			len("torrents.php?recordlabel="):]
+		if t := Text(n.FirstChild); a != t {
+			return fmt.Errorf(
+				"recordlabel tag doesn't match text, %s != %s",
+				a, t)
+		}
+		bc.convertChildren(n)
+		return nil
+	case strings.Contains(href, "torrents.php?taglist="):
+		a := href[strings.Index(href, "torrents.php?taglist=")+
+			len("torrents.php?taglist="):]
+		if t := Text(n.FirstChild); a != t {
+			return fmt.Errorf(
+				"taglist tag doesn't match text, %s != %s",
+				a, t)
+		}
+		bc.convertChildren(n)
+		return nil
 	default:
 		if AssertText(n.FirstChild, href) == nil {
 			// href = anchor text
