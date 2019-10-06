@@ -296,6 +296,12 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"[important]Lorem ipsum[/important]",
 		nil,
 	},
+	test{
+		"hr",
+		`<hr><br />`,
+		"\n",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {

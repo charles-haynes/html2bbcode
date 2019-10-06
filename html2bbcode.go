@@ -345,7 +345,10 @@ func (bc *BBCode) Blockquote(n *html.Node) error {
 }
 
 func (bc *BBCode) Hr(n *html.Node) error {
-	return nil
+	// not on all sites  ignore it
+	// shouldn't be any children
+	// bc.WriteString("[hr]")
+	return bc.convertChildren(n)
 }
 
 func ParseStyle(style string) (sk, sv string, err error) {
