@@ -813,6 +813,9 @@ func (bc *BBCode) convertChildren(n *html.Node) error {
 	return nil
 }
 
+// Convert takes an HTML formatted string, and returns a BBCode formattted
+// string or an error if it can't convert it
+// some logic is based on the Gazelle PHP converter
 func Convert(h string) (bb string, err error) {
 	bc := BBCode{}
 	doc, err := html.Parse(strings.NewReader(h))
