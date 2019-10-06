@@ -267,6 +267,30 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		nil,
 	},
 	test{
+		"collage id",
+		`<a href="/collages.php?id=dolor">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"torrent id",
+		`<a href="/torrents.php?id=dolor">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"artist id",
+		`<a href="/artist.php?id=dolor">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"request id",
+		`<a href="/requests.php?action=view&id=dolor">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
 		"important",
 		`<strong class="important_text">Lorem ipsum</strong>`,
 		"[important]Lorem ipsum[/important]",

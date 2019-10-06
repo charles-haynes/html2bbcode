@@ -684,11 +684,17 @@ func (bc *BBCode) A(n *html.Node) error {
 		// strip forum links, they won't work cross site
 		return bc.convertChildren(n)
 	case strings.HasPrefix(href, "/requests.php?action=view&id="):
-		return fmt.Errorf("todo")
+		// strip request links, they won't work cross site
+		return bc.convertChildren(n)
 	case strings.HasPrefix(href, "/collages.php?id="):
-		return fmt.Errorf("todo")
+		// strip collage links, they won't work cross site
+		return bc.convertChildren(n)
 	case strings.HasPrefix(href, "/torrents.php?id="):
-		return fmt.Errorf("todo")
+		// strip torrent links, they won't work cross site
+		return bc.convertChildren(n)
+	case strings.HasPrefix(href, "/artist.php?id="):
+		// strip artist links, they won't work cross site
+		return bc.convertChildren(n)
 	case strings.Contains(href, "/torrents.php?recordlabel="):
 		a := href[strings.Index(href, "/torrents.php?recordlabel=")+
 			len("/torrents.php?recordlabel="):]
