@@ -169,6 +169,20 @@ func (bc *BBCode) NodeData(n *html.Node, tag string) error {
 	return nil
 }
 
+func (bc *BBCode) NodeLiteral(n *html.Node, tag string, l string) error {
+	if n.FirstChild != nil {
+		return fmt.Errorf("expected node %s not to have children", tag)
+	}
+	bc.WriteString("[")
+	bc.WriteString(tag)
+	bc.WriteString("]")
+	bc.WriteString(l)
+	bc.WriteString("[/")
+	bc.WriteString(tag)
+	bc.WriteString("]")
+	return nil
+}
+
 func (bc *BBCode) NodeVal(n *html.Node, tag, v string) error {
 	bc.WriteString("[")
 	bc.WriteString(tag)
@@ -294,17 +308,23 @@ func (bc *BBCode) Img(n *html.Node) error {
 	return nil
 }
 
+func Text(n *html.Node) string {
+	if n == nil {
+		return ""
+	}
+	if n.Type != html.TextNode {
+		return ""
+	}
+	return n.Data
+}
+
 func (bc *BBCode) Blockquote(n *html.Node) error {
 	if !PartOfHidden(n) {
 		return bc.convertChildren(n)
 	}
 	strong := n.PrevSibling.PrevSibling.PrevSibling
-	if strong.FirstChild != nil &&
-		strong.FirstChild.Type == html.TextNode {
-		tag := strong.FirstChild.Data
-		if tag != "Hidden text" {
-			return bc.NodeVal(n, "hide", tag)
-		}
+	if tag := Text(strong.FirstChild); tag != "Hidden text" {
+		return bc.NodeVal(n, "hide", tag)
 	}
 	return bc.Node(n, "hide")
 }
@@ -526,7 +546,14 @@ func (bc *BBCode) A(n *html.Node) error {
 	case PartOfHidden(n):
 		return nil
 	case strings.HasPrefix(href, "artist.php?artistname="):
-		return bc.NodeData(n, "artist")
+		a := strings.TrimPrefix(href, "artist.php?artistname=")
+		if t := Text(n.FirstChild); a != t {
+			return fmt.Errorf(
+				"artist tag doesn't match text, %s != %s",
+				a, t)
+		}
+		bc.Node(n, "artist")
+		return nil
 	case strings.HasPrefix(href, "user.php?action=search&search="):
 		return bc.NodeData(n, "user")
 	case strings.HasPrefix(href, "forums.php?action=viewthread&threadid="):

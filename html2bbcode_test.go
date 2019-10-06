@@ -1,6 +1,7 @@
 package html2bbcode
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -152,6 +153,18 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		`<strong>dolor</strong>: <a href="javascript:void(0);" onclick="BBCode.spoiler(this);">Show</a><blockquote class="dolor">Lorem ipsum</blockquote>`,
 		"[b]dolor[/b]: [url=javascript:void(0);]Show[/url]Lorem ipsum",
 		nil,
+	},
+	test{
+		"artist",
+		`<a href="artist.php?artistname=Lorem ipsum">Lorem ipsum</a>`,
+		"[artist]Lorem ipsum[/artist]",
+		nil,
+	},
+	test{
+		"artist error",
+		`<a href="artist.php?artistname=Lorem ipsum">dolor</a>`,
+		"",
+		fmt.Errorf("artist tag doesn't match text, Lorem ipsum != dolor"),
 	},
 }
 
