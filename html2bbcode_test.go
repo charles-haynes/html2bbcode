@@ -232,6 +232,34 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"[quote=Lorem]dolor[/quote]",
 		nil,
 	},
+	test{
+		"real example with padding",
+		`<strong><span class="size4">Tracklist</span></strong><br />
+<strong>01.</strong> Claude Vonstroke &amp; Eddy M - Getting Hot <span style="font-style: italic;">(3:50)</span><br />
+<br />
+It&#39;s &#39;Getting Hot&#39;, and Claude VonStroke and Eddy M team up to give you what you want! Eddy M hails from Barcelona, where he is a resident of the infamous El Row parties, and him and Claude are a perfect match for this funky, rolling monster.<br />
+<br />
+<strong>More info:</strong> <span style="display:inline-block; padding: 0px 3px;"><a rel="noreferrer" target="_blank" href="https://listen.tidal.com/album/106594181"><img width="18" class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="https://ptpimg.me/dhyvs6.png" src="https://ptpimg.me/dhyvs6.png" /> Tidal</a></span> <span style="display:inline-block; padding: 0px 3px;"><a rel="noreferrer" target="_blank" href="https://pro.beatport.com/release/getting-hot/2550383"><img width="18" class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="https://ptpimg.me/26k503.png" src="https://ptpimg.me/26k503.png" /> Beatport</a></span></div>`,
+		`[b][size=4]Tracklist[/size][/b]
+[b]01.[/b] Claude Vonstroke & Eddy M - Getting Hot [i](3:50)[/i]
+
+It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you want! Eddy M hails from Barcelona, where he is a resident of the infamous El Row parties, and him and Claude are a perfect match for this funky, rolling monster.
+
+[b]More info:[/b] [pad=0|3][url=https://listen.tidal.com/album/106594181][img=18]https://ptpimg.me/dhyvs6.png[/img] Tidal[/url][/pad] [pad=0|3][url=https://pro.beatport.com/release/getting-hot/2550383][img=18]https://ptpimg.me/26k503.png[/img] Beatport[/url][/pad]`,
+		nil,
+	},
+	test{
+		"padding 0 3",
+		`<span style="display:inline-block; padding: 0px 3px;">Lorem ipsum</span>`,
+		"[pad=0|3]Lorem ipsum[/pad]",
+		nil,
+	},
+	test{
+		"padding 5 0 0 0",
+		`<span style="display:inline-block; padding: 5px 0px 0px 0px;">Lorem ipsum</span>`,
+		"[pad=5|0|0|0]Lorem ipsum[/pad]",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {
