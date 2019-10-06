@@ -151,7 +151,7 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 	test{
 		"not spoiler",
 		`<strong>dolor</strong>: <a href="javascript:void(0);" onclick="BBCode.spoiler(this);">Show</a><blockquote class="dolor">Lorem ipsum</blockquote>`,
-		"[b]dolor[/b]: [url=javascript:void(0);]Show[/url]Lorem ipsum",
+		"[b]dolor[/b]: [url=javascript:void(0);]Show[/url][quote]Lorem ipsum[/quote]",
 		nil,
 	},
 	test{
@@ -206,6 +206,30 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"color",
 		`<span style="color: Lorem ipsum;">dolor</span>`,
 		"[color=Lorem ipsum]dolor[/color]",
+		nil,
+	},
+	test{
+		"pre",
+		`<pre>Lorem ipsum</pre>`,
+		"[pre]Lorem ipsum[/pre]",
+		nil,
+	},
+	test{
+		"quote",
+		`<blockquote>Lorem ipsum</blockquote>`,
+		"[quote]Lorem ipsum[/quote]",
+		nil,
+	},
+	test{
+		"attributed quote",
+		`<strong class="quoteheader">dolor</strong> wrote: <blockquote>Lorem ipsum</blockquote>`,
+		"[quote=dolor]Lorem ipsum[/quote]",
+		nil,
+	},
+	test{
+		"linked quote",
+		`<a href="#" onclick="QuoteJump(event, 'ipsum'); return false;"><strong class="quoteheader">Lorem</strong> wrote: </a><blockquote>dolor</blockquote>`,
+		"[quote=Lorem]dolor[/quote]",
 		nil,
 	},
 }

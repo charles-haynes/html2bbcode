@@ -319,21 +319,32 @@ func Text(n *html.Node) string {
 }
 
 func (bc *BBCode) Blockquote(n *html.Node) error {
-	if !PartOfHidden(n) {
-		return bc.convertChildren(n)
+	if PartOfHidden(n) {
+		strong := n.PrevSibling.PrevSibling.PrevSibling
+		if tag := Text(strong.FirstChild); tag != "Hidden text" {
+			return bc.NodeVal(n, "hide", tag)
+		}
+		return bc.Node(n, "hide")
 	}
-	strong := n.PrevSibling.PrevSibling.PrevSibling
-	if tag := Text(strong.FirstChild); tag != "Hidden text" {
-		return bc.NodeVal(n, "hide", tag)
+	if PartOfLinkedQuote(n) {
+		// we ignore link info since they won't work across sites
+		// a := n.PrevSibling
+		// onclick, _ := GetAttr(a, "onclick")
+		// link := LinkedQuoteRE.FindStringSubmatch(onclick)[1]
+		strong := n.PrevSibling.FirstChild
+		// tag := Text(strong.FirstChild) + "|" + link
+		tag := Text(strong.FirstChild)
+		return bc.NodeVal(n, "quote", tag)
 	}
-	return bc.Node(n, "hide")
+	if PartOfAttributedQuote(n) {
+		strong := n.PrevSibling.PrevSibling
+		tag := Text(strong.FirstChild)
+		return bc.NodeVal(n, "quote", tag)
+	}
+	return bc.Node(n, "quote")
 }
 
 func (bc *BBCode) Hr(n *html.Node) error {
-	return nil
-}
-
-func (bc *BBCode) Pre(n *html.Node) error {
 	return nil
 }
 
@@ -443,7 +454,7 @@ func (bc *BBCode) Strong(n *html.Node) error {
 	case "quote":
 		return bc.Node(n, "quote")
 	default:
-		if PartOfHidden(n) {
+		if PartOfHidden(n) || PartOfAttributedQuote(n) {
 			return nil
 		}
 		return bc.Node(n, "b")
@@ -476,6 +487,20 @@ func AssertText(n *html.Node, t string) error {
 		return fmt.Errorf("expected text %s, got %s", t, n.Data)
 	}
 	return nil
+}
+
+func Parent(n *html.Node) *html.Node {
+	if n == nil {
+		return nil
+	}
+	return n.Parent
+}
+
+func FirstChild(n *html.Node) *html.Node {
+	if n == nil {
+		return nil
+	}
+	return n.FirstChild
 }
 
 func Prev(n *html.Node) *html.Node {
@@ -521,6 +546,9 @@ func PartOfHidden(n *html.Node) bool {
 	if strong == nil || colon == nil || a == nil || blockquote == nil {
 		return false
 	}
+	if err := AssertElement(strong, atom.Strong); err != nil {
+		return false
+	}
 	if colon.Data != ": " {
 		return false
 	}
@@ -539,6 +567,99 @@ func PartOfHidden(n *html.Node) bool {
 	}
 	return true
 }
+func PartOfAttributedQuote(n *html.Node) bool {
+	if n == nil {
+		return false
+	}
+	var strong, wrote, blockquote *html.Node
+	switch n.Type {
+	case html.ElementNode:
+		switch n.DataAtom {
+		case atom.Strong:
+			strong = n
+		case atom.Blockquote:
+			strong = Prev(Prev(n))
+		default:
+			return false
+
+		}
+	case html.TextNode:
+		strong = Prev(n)
+	default:
+		return false
+	}
+	wrote = Next(strong)
+	blockquote = Next(wrote)
+	if strong == nil || wrote == nil || blockquote == nil {
+		return false
+	}
+	if err := AssertElement(strong, atom.Strong); err != nil {
+		return false
+	}
+	if Text(strong.FirstChild) == "" {
+		return false
+	}
+	if wrote.Data != " wrote: " {
+		return false
+	}
+	if err := AssertElement(blockquote, atom.Blockquote); err != nil {
+		return false
+	}
+	return true
+}
+
+var LinkedQuoteRE = regexp.MustCompile(
+	`^QuoteJump\(event, '([^']+)'\); return false;$`)
+
+func PartOfLinkedQuote(n *html.Node) bool {
+	if n == nil {
+		return false
+	}
+	var a *html.Node
+	switch n.Type {
+	case html.ElementNode:
+		switch n.DataAtom {
+		case atom.A:
+			a = n
+		case atom.Strong:
+			a = Parent(n)
+		case atom.Blockquote:
+			a = Prev(n)
+		default:
+			return false
+
+		}
+	case html.TextNode:
+		a = Parent(n)
+	default:
+		return false
+	}
+	strong := FirstChild(a)
+	wrote := Next(strong)
+	blockquote := Next(a)
+	if a == nil || strong == nil || wrote == nil || blockquote == nil {
+		return false
+	}
+	if href, _ := GetAttr(a, "href"); href != "#" {
+		return false
+	}
+	if onclick, _ := GetAttr(a, "onclick"); !LinkedQuoteRE.MatchString(onclick) {
+		return false
+	}
+	if err := AssertElement(strong, atom.Strong); err != nil {
+		return false
+	}
+	if Text(strong.FirstChild) == "" {
+		return false
+	}
+	if wrote.Data != " wrote: " {
+		return false
+	}
+	if err := AssertElement(blockquote, atom.Blockquote); err != nil {
+		return false
+	}
+	return true
+}
 
 func (bc *BBCode) A(n *html.Node) error {
 	href, err := GetAttr(n, "href")
@@ -546,7 +667,7 @@ func (bc *BBCode) A(n *html.Node) error {
 		return err
 	}
 	switch true {
-	case PartOfHidden(n):
+	case PartOfHidden(n) || PartOfLinkedQuote(n) || PartOfLinkedQuote(n):
 		return nil
 	case strings.HasPrefix(href, "artist.php?artistname="):
 		a := strings.TrimPrefix(href, "artist.php?artistname=")
@@ -635,7 +756,7 @@ func (bc *BBCode) element(n *html.Node) error {
 		}
 		bc.lists = bc.lists[:len(bc.lists)-1]
 	case atom.Pre:
-		return bc.Pre(n)
+		return bc.Node(n, "pre")
 	case atom.Span:
 		return bc.Span(n)
 	case atom.Strong:
@@ -657,7 +778,7 @@ func (bc *BBCode) convert(n *html.Node) error {
 	case html.ErrorNode:
 		return fmt.Errorf("error node %s", n.Data)
 	case html.TextNode:
-		if PartOfHidden(n) {
+		if PartOfHidden(n) || PartOfAttributedQuote(n) || PartOfLinkedQuote(n) {
 			return nil
 		}
 		bc.WriteString(strings.ReplaceAll(n.Data, "\n", ""))
