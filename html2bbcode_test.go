@@ -260,6 +260,12 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"[pad=5|0|0|0]Lorem ipsum[/pad]",
 		nil,
 	},
+	test{
+		"forum link",
+		`<a href="/forums.php?action=viewthread&threadid=dolor">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {

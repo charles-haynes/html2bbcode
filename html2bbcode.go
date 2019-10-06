@@ -678,19 +678,20 @@ func (bc *BBCode) A(n *html.Node) error {
 		}
 		bc.Node(n, "artist")
 		return nil
-	case strings.HasPrefix(href, "user.php?action=search&search="):
+	case strings.HasPrefix(href, "/user.php?action=search&search="):
 		return bc.NodeData(n, "user")
-	case strings.HasPrefix(href, "forums.php?action=viewthread&threadid="):
+	case strings.HasPrefix(href, "/forums.php?action=viewthread&threadid="):
+		// strip forum links, they won't work cross site
+		return bc.convertChildren(n)
+	case strings.HasPrefix(href, "/requests.php?action=view&id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "requests.php?action=view&id="):
+	case strings.HasPrefix(href, "/collages.php?id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "collages.php?id="):
+	case strings.HasPrefix(href, "/torrents.php?id="):
 		return fmt.Errorf("todo")
-	case strings.HasPrefix(href, "torrents.php?id="):
-		return fmt.Errorf("todo")
-	case strings.Contains(href, "torrents.php?recordlabel="):
-		a := href[strings.Index(href, "torrents.php?recordlabel=")+
-			len("torrents.php?recordlabel="):]
+	case strings.Contains(href, "/torrents.php?recordlabel="):
+		a := href[strings.Index(href, "/torrents.php?recordlabel=")+
+			len("/torrents.php?recordlabel="):]
 		if t := Text(n.FirstChild); a != t {
 			return fmt.Errorf(
 				"recordlabel tag doesn't match text, %s != %s",
@@ -698,9 +699,9 @@ func (bc *BBCode) A(n *html.Node) error {
 		}
 		bc.convertChildren(n)
 		return nil
-	case strings.Contains(href, "torrents.php?taglist="):
-		a := href[strings.Index(href, "torrents.php?taglist=")+
-			len("torrents.php?taglist="):]
+	case strings.Contains(href, "/torrents.php?taglist="):
+		a := href[strings.Index(href, "/torrents.php?taglist=")+
+			len("/torrents.php?taglist="):]
 		if t := Text(n.FirstChild); a != t {
 			return fmt.Errorf(
 				"taglist tag doesn't match text, %s != %s",
