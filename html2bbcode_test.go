@@ -166,6 +166,18 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"",
 		fmt.Errorf("artist tag doesn't match text, Lorem ipsum != dolor"),
 	},
+	test{
+		"link",
+		`<a rel="noreferrer" target="_blank" href="Lorem ipsum">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"link text",
+		`<a rel="noreferrer" target="_blank" href="Lorem ipsum">dolor</a>`,
+		"[url=Lorem ipsum]dolor[/url]",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {
