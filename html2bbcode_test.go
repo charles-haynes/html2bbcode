@@ -266,6 +266,12 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"Lorem ipsum",
 		nil,
 	},
+	test{
+		"important",
+		`<strong class="important_text">Lorem ipsum</strong>`,
+		"[important]Lorem ipsum[/important]",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {
