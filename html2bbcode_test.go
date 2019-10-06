@@ -202,6 +202,12 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"",
 		fmt.Errorf("recordlabel tag doesn't match text, Lorem ipsum != dolor"),
 	},
+	test{
+		"color",
+		`<span style="color: Lorem ipsum;">dolor</span>`,
+		"[color=Lorem ipsum]dolor[/color]",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {

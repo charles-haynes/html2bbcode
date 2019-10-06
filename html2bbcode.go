@@ -350,6 +350,9 @@ func ParseStyle(style string) (sk, sv string, err error) {
 func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 	pad := false
 	for _, style := range strings.Split(v, ";") {
+		if style == "" {
+			continue // skip empty
+		}
 		sk, sv, err := ParseStyle(style)
 		if err != nil {
 			return err
@@ -365,8 +368,8 @@ func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 				return fmt.Errorf("unknown text-decoration %s", sv)
 			}
 			return bc.Node(n, "underline")
-		case "color: ":
-			bc.NodeVal(n, "color", sv)
+		case "color":
+			return bc.NodeVal(n, "color", sv)
 		case "display":
 			if sv == "inline-block" {
 				pad = true
