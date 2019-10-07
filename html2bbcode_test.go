@@ -62,7 +62,7 @@ var tests = []test{
 	},
 	test{
 		"desc image",
-		`<img class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="https://lut.im/9wZAp52yrB/0RELtSt1QzgHZIoz.jpg" src="https://redacted.ch/image.php?c=1&amp;i=https%3A%2F%2Flut.im%2F9wZAp52yrB%2F0RELtSt1QzgHZIoz.jpg" />`,
+		`<img class="scale_image" onclick="lightbox.init(this, $(this).width());" alt="https://lut.im/9wZAp52yrB/0RELtSt1QzgHZIoz.jpg" src="https://example.com/image.php?c=1&amp;i=https%3A%2F%2Flut.im%2F9wZAp52yrB%2F0RELtSt1QzgHZIoz.jpg" />`,
 		"[img=https://lut.im/9wZAp52yrB/0RELtSt1QzgHZIoz.jpg]",
 		nil},
 	test{
@@ -180,25 +180,25 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 	},
 	test{
 		"taglist",
-		`<a href="https://torrents.php?taglist=Lorem ipsum">Lorem ipsum</a>`,
+		`<a href="https://example.com/torrents.php?taglist=Lorem ipsum">Lorem ipsum</a>`,
 		"Lorem ipsum",
 		nil,
 	},
 	test{
 		"taglist error",
-		`<a href="https://torrents.php?taglist=Lorem ipsum">dolor</a>`,
+		`<a href="https://example.com/torrents.php?taglist=Lorem ipsum">dolor</a>`,
 		"",
 		fmt.Errorf("taglist tag doesn't match text, Lorem ipsum != dolor"),
 	},
 	test{
 		"recordlabel",
-		`<a href="https://torrents.php?recordlabel=Lorem ipsum">Lorem ipsum</a>`,
+		`<a href="https://example.com/torrents.php?recordlabel=Lorem ipsum">Lorem ipsum</a>`,
 		"Lorem ipsum",
 		nil,
 	},
 	test{
 		"recordlabel error",
-		`<a href="https://torrents.php?recordlabel=Lorem ipsum">dolor</a>`,
+		`<a href="https://example.com/torrents.php?recordlabel=Lorem ipsum">dolor</a>`,
 		"",
 		fmt.Errorf("recordlabel tag doesn't match text, Lorem ipsum != dolor"),
 	},
@@ -300,6 +300,30 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"hr",
 		`<hr><br />`,
 		"\n",
+		nil,
+	},
+	{
+		"htmlencoded artist",
+		`<a href="artist.php?artistname=Lorem+ipsum">Lorem ipsum</a>`,
+		"[artist]Lorem ipsum[/artist]",
+		nil,
+	},
+	test{
+		"htmlencoded taglist",
+		`<a href="https://example.com/torrents.php?taglist=Lorem%20ipsum">Lorem ipsum</a>`,
+		"Lorem ipsum",
+		nil,
+	},
+	test{
+		"htmlencoded recordlabel",
+		`<a href="https://example.com/torrents.php?recordlabel=Mustafa+Av%C5%9Faro%C4%9Flu">Mustafa Avşaroğlu</a>`,
+		"Mustafa Avşaroğlu",
+		nil,
+	},
+	test{
+		"user",
+		`<a href="/user.php?action=search&search=Lorem ipsum">Lorem ipsum</a>`,
+		"[user]Lorem ipsum[/user]",
 		nil,
 	},
 }

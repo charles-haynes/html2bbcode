@@ -2,6 +2,7 @@ package html2bbcode
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -669,55 +670,81 @@ func (bc *BBCode) A(n *html.Node) error {
 	if err != nil {
 		return err
 	}
-	switch true {
-	case PartOfHidden(n) || PartOfLinkedQuote(n) || PartOfLinkedQuote(n):
+	if PartOfHidden(n) || PartOfLinkedQuote(n) || PartOfLinkedQuote(n) {
 		return nil
-	case strings.HasPrefix(href, "artist.php?artistname="):
-		a := strings.TrimPrefix(href, "artist.php?artistname=")
-		if t := Text(n.FirstChild); a != t {
-			return fmt.Errorf(
-				"artist tag doesn't match text, %s != %s",
-				a, t)
+	}
+	url, err := url.Parse(href)
+	q := url.Query()
+	switch url.Path {
+	case "artist.php", "/artist.php":
+		if a := q.Get("artistname"); a != "" {
+			if t := Text(n.FirstChild); a != t {
+				return fmt.Errorf(
+					"artist tag doesn't match text, %s != %s",
+					a, t)
+			}
+			return bc.Node(n, "artist")
 		}
-		bc.Node(n, "artist")
-		return nil
-	case strings.HasPrefix(href, "/user.php?action=search&search="):
-		return bc.NodeData(n, "user")
-	case strings.HasPrefix(href, "/forums.php?action=viewthread&threadid="):
-		// strip forum links, they won't work cross site
-		return bc.convertChildren(n)
-	case strings.HasPrefix(href, "/requests.php?action=view&id="):
-		// strip request links, they won't work cross site
-		return bc.convertChildren(n)
-	case strings.HasPrefix(href, "/collages.php?id="):
-		// strip collage links, they won't work cross site
-		return bc.convertChildren(n)
-	case strings.HasPrefix(href, "/torrents.php?id="):
-		// strip torrent links, they won't work cross site
-		return bc.convertChildren(n)
-	case strings.HasPrefix(href, "/artist.php?id="):
-		// strip artist links, they won't work cross site
-		return bc.convertChildren(n)
-	case strings.Contains(href, "/torrents.php?recordlabel="):
-		a := href[strings.Index(href, "/torrents.php?recordlabel=")+
-			len("/torrents.php?recordlabel="):]
-		if t := Text(n.FirstChild); a != t {
-			return fmt.Errorf(
-				"recordlabel tag doesn't match text, %s != %s",
-				a, t)
+		if a := q.Get("id"); a != "" {
+			// artist by id won't work cross site
+			return bc.convertChildren(n)
 		}
-		bc.convertChildren(n)
-		return nil
-	case strings.Contains(href, "/torrents.php?taglist="):
-		a := href[strings.Index(href, "/torrents.php?taglist=")+
-			len("/torrents.php?taglist="):]
-		if t := Text(n.FirstChild); a != t {
-			return fmt.Errorf(
-				"taglist tag doesn't match text, %s != %s",
-				a, t)
+		return fmt.Errorf("unknown artist query %s", href)
+	case "/user.php": // "action=search?search="
+		if s := q.Get("search"); s != "" && q.Get("action") == "search" {
+			if t := Text(n.FirstChild); s != t {
+				return fmt.Errorf(
+					"user tag doesn't match text, %s != %s",
+					s, t)
+			}
+			// users probably won't actually work across sites...
+			return bc.Node(n, "user")
 		}
-		bc.convertChildren(n)
-		return nil
+		return fmt.Errorf("unkknown user query %s", href)
+	case "/forums.php": // "?action=viewthread&threadid="
+		if s := q.Get("threadid"); s != "" &&
+			q.Get("action") == "viewthread" {
+			// viewing threads won't work across sites
+			return bc.convertChildren(n)
+		}
+		return fmt.Errorf("unknown forums query %s", href)
+	case "/requests.php": // "?action=view&id="
+		if s := q.Get("id"); s != "" &&
+			q.Get("action") == "view" {
+			// viewing requests won't work across sites
+			return bc.convertChildren(n)
+		}
+		return fmt.Errorf("unknown request query %s", href)
+	case "/collages.php": // "?id="
+		if s := q.Get("id"); s != "" {
+			// viewing collages won't work across sites
+			return bc.convertChildren(n)
+		}
+		return fmt.Errorf("unknown collages query %s", href)
+	case "/torrents.php": // "?recordlabel="
+		if a := q.Get("recordlabel"); a != "" {
+			if t := Text(n.FirstChild); a != t {
+				return fmt.Errorf(
+					"recordlabel tag doesn't match text, %s != %s",
+					a, t)
+			}
+			return bc.convertChildren(n)
+
+		}
+		if a := q.Get("taglist"); a != "" {
+			if t := Text(n.FirstChild); a != t {
+				return fmt.Errorf(
+					"taglist tag doesn't match text, %s != %s",
+					a, t)
+			}
+			return bc.convertChildren(n)
+		}
+		// "?id="
+		if s := q.Get("id"); s != "" {
+			// viewing torrents by id  won't work across sites
+			return bc.convertChildren(n)
+		}
+		return fmt.Errorf("unknown torrents query %s", href)
 	default:
 		if AssertText(n.FirstChild, href) == nil {
 			// href = anchor text
@@ -733,8 +760,8 @@ func (bc *BBCode) A(n *html.Node) error {
 			return err
 		}
 		bc.WriteString("[/url]")
+		return nil
 	}
-	return nil
 }
 
 func (bc *BBCode) element(n *html.Node) error {
