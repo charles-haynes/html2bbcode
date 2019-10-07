@@ -326,6 +326,12 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		"[user]Lorem ipsum[/user]",
 		nil,
 	},
+	test{
+		"taglist with periods",
+		`<a href="https://example.com/torrents.php?taglist=lorem.ipsum">lorem ipsum</a>`,
+		"lorem ipsum",
+		nil,
+	},
 }
 
 func EqualErrors(a, b error) bool {

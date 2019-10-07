@@ -732,7 +732,10 @@ func (bc *BBCode) A(n *html.Node) error {
 
 		}
 		if a := q.Get("taglist"); a != "" {
-			if t := Text(n.FirstChild); a != t {
+			t := Text(n.FirstChild)
+			ad := strings.ReplaceAll(a, ".", " ")
+			td := strings.ReplaceAll(t, ".", " ")
+			if a != t && ad != td {
 				return fmt.Errorf(
 					"taglist tag doesn't match text, %s != %s",
 					a, t)
