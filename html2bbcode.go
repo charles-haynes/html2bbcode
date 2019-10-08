@@ -665,6 +665,24 @@ func PartOfLinkedQuote(n *html.Node) bool {
 	return true
 }
 
+func (bc *BBCode) Url(n *html.Node, href string) error {
+	if AssertText(n.FirstChild, href) == nil {
+		// href = anchor text
+		// urls are autolinked
+		// no tags required
+		bc.WriteString(href)
+		return nil
+	}
+	bc.WriteString(`[url=`)
+	bc.WriteString(href)
+	bc.WriteString(`]`)
+	if err := bc.convertChildren(n); err != nil {
+		return err
+	}
+	bc.WriteString("[/url]")
+	return nil
+}
+
 func (bc *BBCode) A(n *html.Node) error {
 	href, err := GetAttr(n, "href")
 	if err != nil {
@@ -679,9 +697,10 @@ func (bc *BBCode) A(n *html.Node) error {
 	case "artist.php", "/artist.php":
 		if a := q.Get("artistname"); a != "" {
 			if t := Text(n.FirstChild); a != t {
-				return fmt.Errorf(
-					"artist tag doesn't match text, %s != %s",
-					a, t)
+				// artist tag doesn't match text
+				// won't work cross site
+				// return bc.Url(n, href)
+				return bc.convertChildren(n)
 			}
 			return bc.Node(n, "artist")
 		}
@@ -693,9 +712,9 @@ func (bc *BBCode) A(n *html.Node) error {
 	case "/user.php": // "action=search?search="
 		if s := q.Get("search"); s != "" && q.Get("action") == "search" {
 			if t := Text(n.FirstChild); s != t {
-				return fmt.Errorf(
-					"user tag doesn't match text, %s != %s",
-					s, t)
+				// user tag doesn't match text
+				// won't work cross site
+				// return bc.Url(n, href)
 			}
 			// users probably won't actually work across sites...
 			return bc.Node(n, "user")
@@ -724,9 +743,9 @@ func (bc *BBCode) A(n *html.Node) error {
 	case "/torrents.php": // "?recordlabel="
 		if a := q.Get("recordlabel"); a != "" {
 			if t := Text(n.FirstChild); a != t {
-				return fmt.Errorf(
-					"recordlabel tag doesn't match text, %s != %s",
-					a, t)
+				// recordlabel tag doesn't match text
+				// won't work cross site
+				// return bc.Url(n, href)
 			}
 			return bc.convertChildren(n)
 
@@ -736,9 +755,9 @@ func (bc *BBCode) A(n *html.Node) error {
 			ad := strings.ReplaceAll(a, ".", " ")
 			td := strings.ReplaceAll(t, ".", " ")
 			if a != t && ad != td {
-				return fmt.Errorf(
-					"taglist tag doesn't match text, %s != %s",
-					a, t)
+				// taglist tag doesn't match text
+				// won't work cross site
+				// return bc.Url(n, href)
 			}
 			return bc.convertChildren(n)
 		}
@@ -749,21 +768,7 @@ func (bc *BBCode) A(n *html.Node) error {
 		}
 		return fmt.Errorf("unknown torrents query %s", href)
 	default:
-		if AssertText(n.FirstChild, href) == nil {
-			// href = anchor text
-			// urls are autolinked
-			// no tags required
-			bc.WriteString(href)
-			return nil
-		}
-		bc.WriteString(`[url=`)
-		bc.WriteString(href)
-		bc.WriteString(`]`)
-		if err := bc.convertChildren(n); err != nil {
-			return err
-		}
-		bc.WriteString("[/url]")
-		return nil
+		return bc.Url(n, href)
 	}
 }
 

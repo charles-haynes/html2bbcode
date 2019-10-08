@@ -1,7 +1,6 @@
 package html2bbcode
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -161,10 +160,10 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		nil,
 	},
 	test{
-		"artist error",
+		"artist doesn't match",
 		`<a href="artist.php?artistname=Lorem ipsum">dolor</a>`,
-		"",
-		fmt.Errorf("artist tag doesn't match text, Lorem ipsum != dolor"),
+		"dolor",
+		nil,
 	},
 	test{
 		"link",
@@ -185,10 +184,10 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		nil,
 	},
 	test{
-		"taglist error",
+		"taglist doesn't match",
 		`<a href="https://example.com/torrents.php?taglist=Lorem ipsum">dolor</a>`,
-		"",
-		fmt.Errorf("taglist tag doesn't match text, Lorem ipsum != dolor"),
+		"dolor",
+		nil,
 	},
 	test{
 		"recordlabel",
@@ -197,10 +196,10 @@ It's 'Getting Hot', and Claude VonStroke and Eddy M team up to give you what you
 		nil,
 	},
 	test{
-		"recordlabel error",
+		"recordlabel not matching",
 		`<a href="https://example.com/torrents.php?recordlabel=Lorem ipsum">dolor</a>`,
-		"",
-		fmt.Errorf("recordlabel tag doesn't match text, Lorem ipsum != dolor"),
+		"dolor",
+		nil,
 	},
 	test{
 		"color",
