@@ -83,6 +83,12 @@ var tests = []test{
 		nil,
 	},
 	test{
+		"underline",
+		`<span style="text-decoration: underline;">Lorem ipsum</span>`,
+		"[u]Lorem ipsum[/u]",
+		nil,
+	},
+	test{
 		"align center",
 		`<div style="text-align: center;">Lorem ipsum</div>`,
 		"[align=center]Lorem ipsum[/align]",

@@ -382,7 +382,7 @@ func (bc *BBCode) SpanStyle(n *html.Node, v string) error {
 			if string(sv) != "underline" {
 				return fmt.Errorf("unknown text-decoration %s", sv)
 			}
-			return bc.Node(n, "underline")
+			return bc.Node(n, "u")
 		case "color":
 			return bc.NodeVal(n, "color", sv)
 		case "display":
